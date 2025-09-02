@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Day 01 Game</title>
+
+</head>
+
+<body>
+  <canvas id="canv"></canvas>
+  <script src="Day02.Vector2.js"></script>
+  <script src="Day03.Scene.js"></script>
+  <script src="Day03.GameObject.js"></script>
+  <script src="Day03.Component.js"></script>
+  <script>
+
+    
+
+    class MainScene extends Scene {
+      constructor() {
+        super()
+        this.gameObjects.push(new TriangleGameObject())
+        this.gameObjects.push(new TriangleGameObject())
+      }
+
+    }
+
+    class TriangleGameObject extends GameObject {
+      constructor() {
+        super()
+        this.components.push(new TriangleController())
+      }
+    }
+
+    class TriangleController extends Component {
+      start() {
+        this.vertex = new Vector2(Math.random()*canvas.width, Math.random()*canvas.height)
+        this.velocity = new Vector2(1, 1)
+      }
+      update() {
+        this.vertex.plusEquals(this.velocity)
+
+        if (this.vertex.x > canvas.width || this.vertex.x < 0) {
+          this.velocity.x *= -1
+        }
+        if (this.vertex.y > canvas.height || this.vertex.y < 0) {
+          this.velocity.y *= -1
+        }
+      }
+      draw(ctx) {
+        ctx.fillStyle = "white"
+
+        ctx.beginPath()
+        ctx.lineTo(this.vertex.x, this.vertex.y)
+        ctx.lineTo(this.vertex.x + 50, this.vertex.y + 50)
+        ctx.lineTo(this.vertex.x + 0, this.vertex.y + 50)
+        ctx.fill()
+      }
+
+    }
+
+    const canvas = document.querySelector("#canv")
+    const ctx = canvas.getContext("2d")
+    let currentScene = new MainScene()
+
+    function start() {
+      currentScene.start()
+      gameLoop()
+    }
+
+    function gameLoop() {
+      update()
+      draw()
+    }
+
+    function update() {
+      currentScene.update()
+    }
+
+    function draw() {
+      ctx.fillStyle = "green"
+      ctx.beginPath()
+      ctx.rect(0, 0, canvas.width, canvas.height)
+      ctx.fill()
+
+      currentScene.draw(ctx)
+
+
+      requestAnimationFrame(gameLoop)
+    }
+
+    requestAnimationFrame(start)
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Day 03 Game</title>
+
+</head>
+
+<body>
+  <canvas id="canv"></canvas>
+  <script src="Day02.Vector2.js"></script>
+  <script src="Day03.Scene.js"></script>
+  <script src="Day03.GameObject.js"></script>
+  <script src="Day03.Component.js"></script>
+  <script>
+
+    // The main scene for our fish tank
+    class MainScene extends Scene {
+      constructor() {
+        super()
+        //Create the fish that will be in the tank
+
+        //!! Note that as the class progresses, you will not be allowed to use for loops in the constructors
+        //of scenes. We'll talk about Unity-compliant ways of handling this
+        for(let i = 0; i < 10; i++){
+          this.gameObjects.push(new ClownFishGameObject())
+        }
+
+        for(let i = 0; i < 10; i++){
+          this.gameObjects.push(new CardinalFishGameObject())
+        }
+      }
+    }
+
+
+    //The game object description for a cardinal fish (silvery one)
+    class CardinalFishGameObject extends GameObject{
+      constructor() {
+        super()
+        const fishController = new FishController()
+        fishController.color = "silver"
+        fishController.width = 20
+        fishController.height = 20
+        fishController.velocity = new Vector2(.5, 0)
+        fishController.frequency = 1 / 30
+        fishController.amplitude = 3
+        this.components.push(fishController)
+      }
+    }
+
+    //The game object description for a clownfish (orange one)
+    class ClownFishGameObject extends GameObject {
+      constructor() {
+        super()
+        const fishController = new FishController()
+        fishController.color = "orange"
+        fishController.width = 20
+        fishController.height = 10
+        fishController.velocity = new Vector2(.5, 0)
+        fishController.frequency = 1 / 20
+        fishController.amplitude = 5
+        this.components.push(fishController)
+      }
+    }
+
+    
+    //Component that controls a fish
+    class FishController extends Component {
+      start() {
+        //Position the fish randomly in the tank
+        this.position = new Vector2(Math.random() * 3 * canvas.width - canvas.width, Math.random() * canvas.height)
+        //Tracks where the fish is in its bobbing movement
+        this.ticks = Math.random()*100
+        //Randomly reverse the direction of half the fish
+        if(Math.random() < .5){
+          this.velocity.x *= -1
+        }
+      }
+      update() {
+        //Move the fish based on its velocity
+        this.position.plusEquals(this.velocity)
+        //Update where the fish is in its bob cycle
+        this.ticks++
+        //Reverse the fish if it is too far right or left
+        //Note that we don't reverse course right at the edges so that it doesn't look too abrupt
+        if (this.position.x > canvas.width * 2 || this.position.x < -canvas.width) {
+          this.velocity.x *= -1
+        }
+      }
+      draw(ctx) {
+        //Set the fill style of the fish
+        ctx.fillStyle = this.color
+
+        //Draw the two triangle that form the color of the fish
+        //We use the sign of the velocity to flip the drawing when the fish reverses course
+        //We'll come up with a better way to do this later.
+        ctx.beginPath()
+        ctx.lineTo(this.position.x + 0 * Math.sign(this.velocity.x), Math.sin(this.ticks * this.frequency) * this.amplitude + this.position.y + 0)
+        ctx.lineTo(this.position.x + 0 * Math.sign(this.velocity.x), Math.sin(this.ticks * this.frequency) * this.amplitude + this.position.y - this.height)
+        ctx.lineTo(this.position.x + this.width * Math.sign(this.velocity.x), Math.sin(this.ticks * this.frequency) * this.amplitude + this.position.y + 0)
+        ctx.lineTo(this.position.x + 0 * Math.sign(this.velocity.x), Math.sin(this.ticks * this.frequency) * this.amplitude + this.position.y + this.height)
+        ctx.lineTo(this.position.x + 0 * Math.sign(this.velocity.x), Math.sin(this.ticks * this.frequency) * this.amplitude + this.position.y + 0)
+        ctx.lineTo(this.position.x - this.width / 3 * Math.sign(this.velocity.x), Math.sin(this.ticks * this.frequency) * this.amplitude + this.position.y - this.height/3)
+        ctx.lineTo(this.position.x - this.width / 3 * Math.sign(this.velocity.x), Math.sin(this.ticks * this.frequency) * this.amplitude + this.position.y + this.height/3)
+        ctx.fill()
+      }
+    }
+
+
+    //The canvas and context for the game
+    const canvas = document.querySelector("#canv")
+    const ctx = canvas.getContext("2d")
+
+    //The current scene we will be starting, updating, and drawing
+    let currentScene = new MainScene()
+
+    //Start the game
+    function start() {
+      currentScene.start()
+      gameLoop()
+    }
+
+    //Loop the game
+    function gameLoop() {
+      update()
+      draw()
+    }
+
+    //Execute the update function
+    function update() {
+      currentScene.update()
+    }
+
+    //Draw the game
+    function draw() {
+      //Start by drawing background
+      //To make it look like a fish tank, we use a gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
+      gradient.addColorStop(0, "#69A6AC")
+      gradient.addColorStop(.8, "#427A82")
+      gradient.addColorStop(1, "#246068")
+
+
+      ctx.fillStyle = gradient
+      ctx.beginPath()
+      ctx.rect(0, 0, canvas.width, canvas.height)
+      ctx.fill()
+
+      //Draw the current scene
+      currentScene.draw(ctx)
+
+      //Continue to loop when it is time
+      requestAnimationFrame(gameLoop)
+    }
+
+    requestAnimationFrame(start)
+  </script>
+</body>
+
+</html>

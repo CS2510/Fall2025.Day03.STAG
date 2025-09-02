@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Day 03 Game</title>
+
+</head>
+
+<body>
+  <canvas id="canv"></canvas>
+  <script src="Day02.Vector2.js"></script>
+  <script src="Day03.Scene.js"></script>
+  <script src="Day03.GameObject.js"></script>
+  <script src="Day03.Component.js"></script>
+  <script>
+
+
+
+    class MainScene extends Scene {
+      constructor() {
+        super()
+        this.gameObjects.push(new FireworkGameObject())
+      }
+    }
+
+    class FireworkGameObject extends GameObject {
+      constructor() {
+        super()
+        this.components.push(new FireworkController())
+      }
+    }
+
+    class FireworkController extends Component {
+      start() {
+        this.velocity = new Vector2(0, -1)
+        this.position = new Vector2(150, 150)
+        this.ticks = 0
+      }
+      update() {
+        this.position.plusEquals(this.velocity)
+        this.ticks++
+
+        if (this.ticks % 5 == 0) {
+          let particleGameObject = new ParticleGameObject()
+          particleGameObject.components[0].position = new Vector2(this.position.x, this.position.y)
+          particleGameObject.components[0].velocity = new Vector2(0, 0)
+
+          currentScene.gameObjects.push(particleGameObject)
+        }
+        if (Math.random() < .01) {
+
+          //Shoot off a lot of firework particles
+          const count = 20
+          for (let i = 0; i < count; i++) {
+            let angle = i*Math.PI*2/count
+            let particleGameObject = new ParticleGameObject()
+            particleGameObject.components[0].position = new Vector2(this.position.x, this.position.y)
+            particleGameObject.components[0].velocity = new Vector2(Math.cos(angle), Math.sin(angle))
+
+            currentScene.gameObjects.push(particleGameObject)
+          }
+
+          //Reposition the firework
+          this.position = new Vector2(Math.random() * canvas.width, 150)
+        }
+      }
+      draw(ctx) {
+        ctx.fillStyle = "white"
+        ctx.beginPath()
+        ctx.lineTo(this.position.x, this.position.y)
+        ctx.lineTo(this.position.x + 5, this.position.y + 5)
+        ctx.lineTo(this.position.x + 0, this.position.y + 5)
+        ctx.fill()
+      }
+    }
+
+    class ParticleGameObject extends GameObject {
+      constructor() {
+        super()
+        this.components.push(new ParticleController())
+      }
+    }
+
+    class ParticleController extends Component {
+      update() {
+        this.position.plusEquals(this.velocity)
+        if (!this.ticks)
+          this.ticks = 0
+        this.ticks++
+      }
+      draw(ctx) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${1 / Math.pow(this.ticks, .3)})`
+        ctx.beginPath()
+        ctx.lineTo(this.position.x, this.position.y)
+        ctx.lineTo(this.position.x + 5, this.position.y + 5)
+        ctx.lineTo(this.position.x + 0, this.position.y + 5)
+        ctx.fill()
+      }
+    }
+
+    class TriangleGameObject extends GameObject {
+      constructor() {
+        super()
+        this.components.push(new TriangleController())
+      }
+    }
+
+    class TriangleController extends Component {
+      start() {
+        this.vertex = new Vector2(Math.random() * canvas.width, Math.random() * canvas.height)
+        this.velocity = new Vector2(1, 1)
+      }
+      update() {
+        this.vertex.plusEquals(this.velocity)
+
+        if (this.vertex.x > canvas.width || this.vertex.x < 0) {
+          this.velocity.x *= -1
+        }
+        if (this.vertex.y > canvas.height || this.vertex.y < 0) {
+          this.velocity.y *= -1
+        }
+      }
+      draw(ctx) {
+        ctx.fillStyle = "yellow"
+
+        ctx.beginPath()
+        ctx.lineTo(this.vertex.x, this.vertex.y)
+        ctx.lineTo(this.vertex.x + 50, this.vertex.y + 50)
+        ctx.lineTo(this.vertex.x + 0, this.vertex.y + 50)
+        ctx.fill()
+      }
+
+    }
+
+    const canvas = document.querySelector("#canv")
+    const ctx = canvas.getContext("2d")
+    let currentScene = new MainScene()
+
+    function start() {
+      currentScene.start()
+      gameLoop()
+    }
+
+    function gameLoop() {
+      update()
+      draw()
+    }
+
+    function update() {
+      currentScene.update()
+    }
+
+    function draw() {
+      ctx.fillStyle = "black"
+      ctx.beginPath()
+      ctx.rect(0, 0, canvas.width, canvas.height)
+      ctx.fill()
+
+      currentScene.draw(ctx)
+
+      requestAnimationFrame(gameLoop)
+    }
+
+    requestAnimationFrame(start)
+  </script>
+</body>
+
+</html>
